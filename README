@@ -1,0 +1,542 @@
+# Copyright (c) 2012-2013 Institute of Information Systems, Hof University
+#
+# This file is part of "Neo4j WebSocket Server".
+#
+# "Neo4j WebSocket Server" is free software: you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+
+                          Neo4j WebSocket Server
+
+  What is it?
+  -----------
+
+  The Neo4j WebSocket Server is the server side for a WebSocket-based driver
+  that enables applications to remotely use an embedded Neo4j database using
+  Cypher queries or stored procedures.
+
+  Documentation
+  -------------
+  Neo4j's documentation can be found at "http://www.neo4j.org/".
+  The version currently used by the server is 1.9.5.
+
+  System Requirements
+  -------------------
+
+  Java:
+    1.7 or above.
+
+  Servlet container (optional):
+    Application server supporting the JEE 7 WebSocket interfaces (tested with
+    GlassFish).
+
+  Neo4j WebSocket common resources:
+    neo4j-websocket-common
+
+  Apache Maven (for building)
+    3.x
+
+  Installing and configuring Neo4j WebSocket Server
+  -------------------------------------------------
+
+  Installing to the local Maven repository:
+
+    1. Download the source code of "neo4j-websocket-common" and extract it
+
+    5. Open a terminal and enter the root directory containing the file pom.xml
+
+    6. execute 'mvn install'
+
+    4. Download the source code of "neo4j-websocket-server" and extract it
+
+    5. Open a terminal and enter the root directory containing the file pom.xml
+
+    6. execute 'mvn install'
+
+  Database configuration:
+
+    0. On linux it is recommended to apply these changes:
+      "http://docs.neo4j.org/chunked/1.9.5/configuration-linux-notes.html"
+
+    1. Open the file "neo4j-websocket-server.properties" in a WYSIWYG editor.
+      If you can't find the file, look for it in "src/main/resources/".
+
+    2. Pick the Neo4 database mode you want to use by specifying the property
+      'neo4j.mode'.
+
+      Options:
+        embedded - community edition embedded database
+
+        enterprise - enterprise edition embedded database (licensed under AGPL,
+          for cluster setups, requires additional configuration).
+
+        rest - use a remote database using the database's REST interface
+          (not recommended, potentially very slow due to a lack of optimization
+          for this mode)
+
+        impermanent - impermantent embedded database for testing
+
+    3. Pick a direcory for the permanent embedded database modes by specifying
+      the property "neo4j.path". The directory may already contain a Neo4j
+      database, but can not be used by another Neo4j instance at the same time.
+
+    4. (optional) Specify an external Neo4j configuration file via the property
+      "neo4j.configpath". This is only required for a cluster setup, see
+      Neo4j's documentation for the configuration options.
+
+    5. (optional) If you're planning to run the Neo4j WebSocket Server as a
+      standalone server, you need to specify the host, port and context the
+      application will be running on using the properties "websocket.host",
+      "websocket.port" and "websocket.path". The resulting WebSocket URI will
+      be "ws://$websocket.host:$websocket.port/websocket.path/websocket".
+
+    6. Specify the format your server will expect and send data in; the deflate
+      algorithm is used for compression. The recommended format for sequential
+      queries is uncompressed BSON, for parallel queries it's BSON with the
+      "fastest" compression option. In case you want to access the server using
+      a browser, you will most likely need to configure the server to use
+      uncompressed JSON.
+
+      Format ("websocket.default.format"):
+        bson - BSON, see "http://bsonspec.org/" for more information
+        json - JSON, slightly less network usage, slower in most cases
+
+      Compression ("websocket.default.compression"):
+        none - no compression
+        fastest - fast compression, less network usage, more CPU usage
+        best - best compression, slightly less network usage, even more CPU
+              usage
+
+    7. Specify how many threads will be used on the server side. A
+      single-threaded server can be faster for sequential queries. At the
+      moment you can only specify the number of threads per connection.
+
+      Enable/disable threading:
+        "websocket.default.threading" - true or false
+
+      Define number of threads:
+        "websocket.default.threads" - 1 or more
+
+    8. Put the file "neo4j-websocket-server.properties" in the application's
+      classpath
+
+
+  Adding stored procedures:
+
+    Cypher:
+
+      1. Create an empty text file.
+
+      2. Open the file in a WYSIWYG editor.
+
+      3. Enter your Cypher queries using the following pattern:
+
+        $QUERY_1_NAME
+        $QUERY_LINE_1
+        ..
+        $QUERY_LINE_n
+        <empty line>
+        $QUERY_2_NAME
+        $QUERY_LINE_1
+        ...
+
+      4. Open the file "neo4j-websocket-server.properties".
+
+      5. Add the file's path as a value for "websocket.stored.cypher"; multiple
+        values are separated by semicolons.
+
+    Java Procedures:
+
+      Google Guice is used for injecting the required objects into your
+      procedure implementations. See "http://code.google.com/p/google-guice/"
+      for more information.
+      Procedures implemented in Java, directly using Neo4j's interfaces can be
+      optimized further than Cypher queries and thus greatly increase
+      performance in some cases.
+
+      The following objects can be injected:
+
+        GraphConfig - the server's configuration object (generic property
+          access)
+
+        ImplUtil - implementation utility providing maps and lists, directly
+          storing properties in the target format classes
+          (optional, may slightly increase performance).
+
+        GraphDatabaseService - Neo4j's database service interface
+
+      To compile against the server using Maven you will need the following
+      dependencies:
+
+        <dependency>
+          <groupId>de.hofuniversity.iisys</groupId>
+          <artifactId>shindig-websocket-common</artifactId>
+          <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+          <groupId>de.hofuniversity.iisys</groupId>
+          <artifactId>neo4j-websocket-server</artifactId>
+          <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+
+      You will need to implement the following:
+
+        1. Your procedure methods:
+          - They need to return an AResultSet<?> or nothing. The default
+            implementations are: SingleResult, ListResult and TableResult. See
+            javadoc for more information.
+
+          - Parameters can be primitive values, Strings and Lists or Maps.
+            There can be Maps in Lists and vice versa with no specified depth
+            limit.
+
+        2. An IProcedureProvider:
+          A loader routine that maps your procedures by their names.
+
+          The procedures need to implement the IStoredProcedure interface
+          through which they will be called using a map of named parameters.
+          The Default implementations are CypherProcedure and NativeProcedure
+          which calls a Java method with a defined sequence from the named
+          parameters.
+          Naming a parameter "$OPTIONS" will result in the whole parameter map
+          being passed.
+
+          See "de.hofuniversity.iisys.neo4j.websock.procedures.NativeTestProcedures"
+          for an example.
+
+        3. A Guice Module:
+          A Module that binds your procedure provider to a named implementation
+          of the IProcedureProvider interface.
+
+          See "de.hofuniversity.iisys.neo4j.websock.procedures.NativeTestModule"
+          for an example.
+
+
+      Configure the loader to load your implementations:
+
+        1. Create an empty text file.
+
+        2. Open the file in a WYSIWYG editor.
+
+        3. Enter the modules' fully qualified name and the names under which
+        you registered the providers using the following pattern:
+
+          $MODULE_1_NAME
+          $PROVIDER_1_NAME
+          ...
+          $PROVIDER_N_NAME
+          <empty line>
+          $MODULE_2_NAME
+          $PROVIDER_3_NAME
+          ...
+
+      4. Open the file "neo4j-websocket-server.properties".
+
+      5. Add the file's path as a value for "websocket.stored.native"; multiple
+        values are separated by semicolons.
+
+      6. Add your library jar file to the server's classpath.
+        For an executable jar file you will need to edit the contained
+        "META-INF/MANIFEST.MF" file.
+        When using an application server, it should suffice to copy your jar
+        into the war archive's "WEB-INF/lib/" folder.
+
+
+  Starting the server:
+
+    Option 1 - Standalone Server:
+
+      1. Use a jar build of the server
+
+      2. Start it using the command line or a shell script
+        You may want to specify the parameters "-Xms${Number}m" and
+        "-Xmx${Number}m" to give the server ${Number} megabytes of RAM
+
+      3. The server will be accessible via the URI you configured earlier
+        (default: "ws://127.0.0.1:8080/neo4j-websocket-server/websocket")
+
+    Option 2 - Running with an application server:
+
+      1. Use a war build of the server
+
+      3. Deploy the war file in your application server
+
+      4. Wait for it to start up
+
+      5. If successful, the server will be accessible via
+        "ws://$host:$port/$context/websocket"
+        or possibly encrypted via
+        "wss://$host:$sslport/$context/websocket"
+
+
+  Using Neo4j WebSocket Server
+  ----------------------------
+
+  Once the server is running, you can either access it using a web application
+  in a browser or a suitable connector from any programming language.
+
+  We implemented a Java client library that provides easy access to the server.
+  Neo4j WebSocket Client, see <insert URL here> for more Information.
+
+  Basic protocol:
+
+    The basic protocol is specified in the file
+    "src/main/java/de/hofuniversity/iisys.neo4j/websock.session/WebsockConstants.java"
+    of the neo4j-websocket-common artifact and uses very short names for
+    individual parameters and values to reduce unnecessary overhead.
+
+    Data types are limited to primitive values, strings, maps and lists which
+    can easily be represented in a JSON-like syntax.
+
+    A query consists of:
+      - a temporarily unique ID, provided by the client, used for the response
+      - a type, specifying the kind of query
+      - a payload which can be a primitive value, a string, a map or a list,
+        depending on what the query is transmitting
+      - a map of named parameters which can also be primitive values, strings,
+        maps or lists
+
+    Here are a few examples in JSON:
+
+      Calling a stored procedure:
+      {
+        //query ID
+        q: "42",
+        //query type: stored procedure call
+        t: "s",
+        //parameter map
+        //there are a few predefined parameters for Java procedures that they
+        //need to evaluate internally, but only the paging parameters are
+        //supported for Cypher by default
+        //all parameters will be passed to the Cypher engine, only the defined
+        //named parameters will be passed to java procedures
+        p:
+        {
+          //subset of all results (first index)
+          s_s: 3,
+          //subset size
+          s_n: 3,
+          //sort order, ascending
+          so: "a",
+          //filter field
+          ff: "name"
+          //filter value
+          fv: "horst"
+          //filter operation, equals
+          fo: "e"
+          //example procedure parameter
+          fofDepth: 3
+        }
+      }
+
+      Directly executing a Cypher query:
+      {
+        //query ID
+        q: "42",
+        //query type: direct Cypher call
+        t: "d",
+        //parameter map
+        //of the generic predefined only the paging parameters are supported
+        //but all parameters will be passed to the Cypher engine
+        p:
+        {
+          //subset of all results (first index) (optional)
+          s_s: 3,
+          //subset size (optional)
+          s_n: 3,
+          //example Cypher parameter
+          idLookup: "id:(john jane)"
+        }
+      }
+
+      Storing a Cypher query, creating a stored procedure:
+      {
+        //query ID
+        q: "42",
+        //query type: store new procedure
+        t: "n",
+        //payload: Cypher query to store
+        l: "START person=node:persons({idLookup}) RETURN person"
+        //parameter map
+        p:
+        {
+          //procedure name
+          n: "getPeople"
+        }
+      }
+
+      Deleting a stored procedure:
+      {
+        //query ID
+        q: "42",
+        //query type: delete procedure
+        t: "e",
+        //payload: name of the procedure
+        l: "friendsOfFriends"
+      }
+
+
+      Result from the server:
+      {
+        //query ID
+        q: "42",
+        //query type: query result
+        t: "r",
+        //payload: result object
+        l:
+        {
+          //result type: single result
+          //(otherwise "l" for lists and "t" for tables)
+          rt: "s",
+          //subset of all results (first index), if any different from 0
+          s_s: 3,
+          //subset size, if defined in a request
+          s_n: 3,
+          //total results, if only subset is requested (not for single results)
+          tot: 9,
+          //result object (map or list)
+          r:
+          {
+            ...
+          }
+        }
+      }
+
+
+      Simple Ping:
+      {
+        //query ID
+        q: "42",
+        //query type: ping
+        t: "i"
+      }
+
+
+      Simple Pong:
+      {
+        //query ID
+        q: "42",
+        //query type: pong
+        t: "o"
+      }
+
+
+      Success message:
+      {
+        //query ID
+        q: "42",
+        //query type: query successful
+        t: "y"
+      }
+
+
+      Error message:
+      {
+        //query ID
+        q: "42",
+        //query type: error while handling query
+        t: "err",
+        //payload: error message
+        l: "error message"
+      }
+
+  Cypher query execution results:
+
+    The results for a Cypher query are automatically converted into a generic
+    table format. They contain a list columns and a list of value lists forming
+    the individual rows. These values can be the typical primitive values,
+    strings, maps and lists. Nodes and relationships are automatically
+    serialized as maps with all their properties.
+
+    Example:
+      {
+        //query ID
+        q: "42",
+        //query type: query result
+        t: "r",
+        //payload: result object
+        l:
+        {
+          //result type: table result
+          rt: "s",
+          //columns
+          col: ["value1","value2","value3"]
+          //result object (list of lists)
+          r:
+          [
+            [...],
+            [...],
+            ...
+          ]
+        }
+      }
+
+
+  Built-in services:
+
+    Two services are availible that offer functionality that is not directly
+    available through Cypher in Neo4j 1.9.x.
+
+    ID manager:
+
+      Offers the generation of unique IDs per type which are based on
+        sequential numbers that increase seprarately from other types.
+        The resulting IDs will have the form "type:number".
+      Procedures:
+
+      getUniqueId
+        parameters:
+          "type" - generic type String to get an ID for
+        returns:
+          Single Result with a map where the new ID is set as the "id" property
+
+
+    Index manager:
+
+      Offers the manipulation of explicit indices.
+      Procedures:
+
+      newIndexEntry - adds an entry to an index, creating it if necessary
+        parameters:
+          "index" - name of the index
+          "nodeId" - (Long) Neo4j node ID of the node to add to the index
+                    can be aqcuired via a Cypher query
+          "key" - key String under which to create the entry
+          "value" - value Object for which to create the entry
+
+      deleteIndexEntry - deletes an entry from an index
+                        either a node ID or a key-value pair are required
+        parameters:
+          "index" - name of the index
+          "nodeId" - (Long) Neo4j node ID of the node to remove from the index
+                    can be aqcuired via a Cypher query
+          "key" - key String under which to delete the entry
+          "value" - value Object for which to delete the entry
+
+      clearIndex - completely deletes an index
+        parameters:
+          "index" - name of the index
+
+  Missing features
+  ----------------
+
+  Authentication
+
+  Procedure overwriting protection
+
+  Configurable total number of threads
+
+  The server is not yet compatible with Neo4j 2.x, additional transactions will
+  be needed.
