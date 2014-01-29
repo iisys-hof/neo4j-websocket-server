@@ -52,23 +52,36 @@
   Installing to the local Maven repository:
 
     1. Download the source code of "neo4j-websocket-common" and extract it
+      The common library's sources can be found at
+      "https://github.com/iisys-hof/shindig-websocket-common"
+      and can be downloaded using git by executing
+      'https://github.com/iisys-hof/shindig-websocket-common.git'.
 
-    5. Open a terminal and enter the root directory containing the file pom.xml
+    2. Open a terminal and enter the root directory containing the file pom.xml
 
-    6. execute 'mvn install'
+    3. execute 'mvn install'
 
     4. Download the source code of "neo4j-websocket-server" and extract it
+      The server's sources can be found at
+      "https://github.com/iisys-hof/neo4j-websocket-server"
+      and can be downloaded using git by executing
+      'git clone https://github.com/iisys-hof/neo4j-websocket-server.git'.
 
     5. Open a terminal and enter the root directory containing the file pom.xml
 
     6. execute 'mvn install'
+
+    7. You should now find a runnable jar and a war file in the 'target'
+      directory. Next to the runnable jar there should also be a folder called
+      'dependency-jars' which you will also need to copy to the directory you
+      may want to run a standalone server from.
 
   Database configuration:
 
     0. On linux it is recommended to apply these changes:
       "http://docs.neo4j.org/chunked/1.9.5/configuration-linux-notes.html"
 
-    1. Open the file "neo4j-websocket-server.properties" in a WYSIWYG editor.
+    1. Open the file "neo4j-websocket-server.properties" in a text editor.
       If you can't find the file, look for it in "src/main/resources/".
 
     2. Pick the Neo4 database mode you want to use by specifying the property
@@ -128,7 +141,8 @@
         "websocket.default.threads" - 1 or more
 
     8. Put the file "neo4j-websocket-server.properties" in the application's
-      classpath
+      classpath. This can either be the directory you run the server from or
+      in case of a web app the directory 'WEB-INF/classes/'.
 
 
   Adding stored procedures:
@@ -316,6 +330,8 @@
         q: "42",
         //query type: stored procedure call
         t: "s",
+        //payload: query name
+        l: "friendsOfFriends",
         //parameter map
         //there are a few predefined parameters for Java procedures that they
         //need to evaluate internally, but only the paging parameters are
@@ -347,6 +363,8 @@
         q: "42",
         //query type: direct Cypher call
         t: "d",
+        //payload: Cypher query to execute
+        l: "START person=node:persons({idLookup}) RETURN person"
         //parameter map
         //of the generic predefined only the paging parameters are supported
         //but all parameters will be passed to the Cypher engine
