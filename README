@@ -93,13 +93,9 @@
         enterprise - enterprise edition embedded database (licensed under AGPL,
           for cluster setups, requires additional configuration).
 
-        rest - use a remote database using the database's REST interface
-          (not recommended, potentially very slow due to a lack of optimization
-          for this mode)
+        impermanent - impermanent embedded database for testing
 
-        impermanent - impermantent embedded database for testing
-
-    3. Pick a direcory for the permanent embedded database modes by specifying
+    3. Pick a directory for the permanent embedded database modes by specifying
       the property "neo4j.path". The directory may already contain a Neo4j
       database, but can not be used by another Neo4j instance at the same time.
 
@@ -510,7 +506,7 @@
     ID manager:
 
       Offers the generation of unique IDs per type which are based on
-        sequential numbers that increase seprarately from other types.
+        sequential numbers that increase separately from other types.
         The resulting IDs will have the form "type:number".
       Procedures:
 
@@ -530,7 +526,7 @@
         parameters:
           "index" - name of the index
           "nodeId" - (Long) Neo4j node ID of the node to add to the index
-                    can be aqcuired via a Cypher query
+                    can be acquired via a Cypher query
           "key" - key String under which to create the entry
           "value" - value Object for which to create the entry
 
@@ -539,7 +535,7 @@
         parameters:
           "index" - name of the index
           "nodeId" - (Long) Neo4j node ID of the node to remove from the index
-                    can be aqcuired via a Cypher query
+                    can be acquired via a Cypher query
           "key" - key String under which to delete the entry
           "value" - value Object for which to delete the entry
 
