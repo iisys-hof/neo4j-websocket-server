@@ -28,7 +28,6 @@ import de.hofuniversity.iisys.neo4j.websock.neo4j.INeo4jConnector;
 import de.hofuniversity.iisys.neo4j.websock.neo4j.Neo4jConnector;
 import de.hofuniversity.iisys.neo4j.websock.neo4j.Neo4jHAConnector;
 import de.hofuniversity.iisys.neo4j.websock.neo4j.Neo4jImpermConnector;
-import de.hofuniversity.iisys.neo4j.websock.neo4j.Neo4jRestConnector;
 
 /**
  * Base class that reads the configuration and chooses the right Neo4j
@@ -41,14 +40,8 @@ public class GraphConfig
     private static final String PATH = "neo4j.path";
     private static final String CONF_PATH = "neo4j.configpath";
 
-    private static final String HOST = "neo4j.server.host";
-    private static final String PORT = "neo4j.server.port";
-    private static final String USER = "neo4j.server.user";
-    private static final String PASSWORD = "neo4j.server.password";
-
     private static final String EMB_MODE = "embedded";
     private static final String HA_MODE = "enterprise";
-    private static final String REST_MODE = "rest";
     private static final String IMP_MODE = "impermanent";
 
 
@@ -139,22 +132,6 @@ public class GraphConfig
             else
             {
                 conn = new Neo4jHAConnector(path);
-            }
-        }
-        else if(REST_MODE.equals(mode))
-        {
-            String url = fProperties.get(HOST) + ":" + fProperties.get(PORT);
-
-            String user = fProperties.get(USER);
-            String password = fProperties.get(PASSWORD);
-
-            if(user != null && password != null)
-            {
-                conn = new Neo4jRestConnector(url, user, password);
-            }
-            else
-            {
-                conn = new Neo4jRestConnector(url);
             }
         }
         else if(IMP_MODE.equals(mode))
