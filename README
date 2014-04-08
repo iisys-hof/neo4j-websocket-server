@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2013 Institute of Information Systems, Hof University
+# Copyright (c) 2012-2014 Institute of Information Systems, Hof University
 #
 # This file is part of "Neo4j WebSocket Server".
 #
@@ -127,8 +127,7 @@
               usage
 
     7. Specify how many threads will be used on the server side. A
-      single-threaded server can be faster for sequential queries. At the
-      moment you can only specify the number of threads per connection.
+      single-threaded server can be faster for sequential queries.
 
       Enable/disable threading:
         "websocket.default.threading" - true or false
@@ -136,9 +135,39 @@
       Define number of threads:
         "websocket.default.threads" - 1 or more
 
-    8. Put the file "neo4j-websocket-server.properties" in the application's
-      classpath. This can either be the directory you run the server from or
-      in case of a web app the directory 'WEB-INF/classes/'.
+    8. (optional) Secure the server by activating authentication and providing
+      a list of users. First, you need to create a text file containing users
+      and their password hashes.
+
+        The lines need to have the format "username=salt:hash".
+
+        You can create those hashes by issuing the following command in the
+        directory with the server's jar file:
+
+          java -cp ./neo4j-websocket-server-$VERSION.jar \
+          de.hofuniversity.iisys.neo4j.websock.neo4j.security.DefaultPasswordScrambler \
+          -u user [-p password] [-h hash_algorithm] [-s salt]
+
+        Without the password parameter, you will be prompted to enter a
+        password. But if you choose to specify it through a parameter, you
+        should erase this call from your shell's history afterwards.
+
+      Next, you need to activate authentication in the server's configuration.
+
+        authentication.type=default
+        authentication.user.file=/path/to/users.file
+
+        //in case you want to use a hashing algorithm other than SHA-512
+        authentication.hash.method=SHA-256
+
+      Caution: The provisional authentication setup itself is not completely
+        secure and restrictive file system permissions and an encrypted
+        connection are strongly recommended.
+
+    9. Put the file "neo4j-websocket-server.properties" in the application's
+      classpath. This can either be the directory you run the server from,
+      inside the server's jar file or in case of a web app the directory
+      'WEB-INF/classes/' inside the server's war file.
 
 
   Adding stored procedures:
@@ -260,24 +289,59 @@
       6. Add your library jar file to the server's classpath.
         For an executable jar file you will need to edit the contained
         "META-INF/MANIFEST.MF" file.
+
+        When using the included startup script, you only need to copy your jar
+        into the application's library folder, for example 'dependency-jars'.
+
         When using an application server, it should suffice to copy your jar
         into the war archive's "WEB-INF/lib/" folder.
 
 
   Starting the server:
 
-    Option 1 - Standalone Server:
+    Option 1 - Standalone Server (running the jar file):
 
       1. Use a jar build of the server
 
-      2. Start it using the command line or a shell script
+      2. Change into the directory where you placed the runnable jar and its
+        dependency folder
+
+      3. Start it using the command line or a shell script using
+        'java -jar $JAR_FILE'
         You may want to specify the parameters "-Xms${Number}m" and
         "-Xmx${Number}m" to give the server ${Number} megabytes of RAM
 
-      3. The server will be accessible via the URI you configured earlier
+      4. The server will be accessible via the URI you configured earlier
         (default: "ws://127.0.0.1:8080/neo4j-websocket-server/websocket")
 
-    Option 2 - Running with an application server:
+    Option 2 - Standalone Server (using the Linux startup script):
+
+      1. Use a jar build of the server
+
+      2. Locate the startup script called 'websocket-server.sh' in the server's
+        sources or download it from its github repository
+
+      3. Place it in the directory where you placed the runnable jar and its
+        dependency folder and change into this directory
+
+      4. Make it executable using 'chmod +x websocket-server.sh'.
+        If needed, change the script's variables to fit your configuration.
+        On some systems you may have to change the last parameter of the
+        command in 'getPID' for it to properly extract the process' PID.
+        You may want to specify the parameters "-Xms${Number}m" and
+        "-Xmx${Number}m" to give the server ${Number} megabytes of RAM in
+        'APP_COMMAND'
+
+      5. Start the server using './websocket-server.sh start'
+        The file 'server.log' will contain its output.
+        './websocket-server.sh status' will show the server's status
+        './websocket-server.sh stop' will shut the server down
+        './websocket-server.sh restart' will restart the server
+
+      6. The server will be accessible via the URI you configured earlier
+        (default: "ws://127.0.0.1:8080/neo4j-websocket-server/websocket")
+
+    Option 3 - Running with an application server:
 
       1. Use a war build of the server
 
@@ -466,6 +530,22 @@
         l: "error message"
       }
 
+      Authentication query:
+      {
+        //query ID
+        q: "42",
+        //query type: error while handling query
+        t: "a",
+        //parameter map
+        p:
+        {
+          //user name
+          u: "user"
+          //password
+          p: "password"
+        }
+      }
+
   Cypher query execution results:
 
     The results for a Cypher query are automatically converted into a generic
@@ -546,11 +626,7 @@
   Missing features
   ----------------
 
-  Authentication
-
   Procedure overwriting protection
-
-  Configurable total number of threads
 
   The server is not yet compatible with Neo4j 2.x, additional transactions will
   be needed.

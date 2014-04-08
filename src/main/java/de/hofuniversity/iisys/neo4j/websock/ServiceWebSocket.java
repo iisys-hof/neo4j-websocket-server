@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Institute of Information Systems, Hof University
+ * Copyright (c) 2012-2014 Institute of Information Systems, Hof University
  *
  * This file is part of "Neo4j WebSocket Server".
  *
@@ -40,6 +40,13 @@ import org.neo4j.graphdb.GraphDatabaseService;
 
 import de.hofuniversity.iisys.neo4j.websock.calls.CypherCallEngine;
 import de.hofuniversity.iisys.neo4j.websock.calls.IStoredProcedure;
+import de.hofuniversity.iisys.neo4j.websock.handlers.ClientQueryHandler;
+import de.hofuniversity.iisys.neo4j.websock.handlers.ThreadedClientQueryHandler;
+import de.hofuniversity.iisys.neo4j.websock.neo4j.security.DefaultAuthHandler;
+import de.hofuniversity.iisys.neo4j.websock.neo4j.security.DefaultPasswordScrambler;
+import de.hofuniversity.iisys.neo4j.websock.neo4j.security.IAuthHandler;
+import de.hofuniversity.iisys.neo4j.websock.neo4j.security.IPasswordScrambler;
+import de.hofuniversity.iisys.neo4j.websock.neo4j.security.SecurityInterceptor;
 import de.hofuniversity.iisys.neo4j.websock.neo4j.service.Neo4jServiceProcedures;
 import de.hofuniversity.iisys.neo4j.websock.procedures.CypherProcedureLoader;
 import de.hofuniversity.iisys.neo4j.websock.procedures.GuiceProcedureLoader;
@@ -82,6 +89,18 @@ public class ServiceWebSocket
     public static final String THREADS_PROP = "websocket.default.threads";
     public static final String DEF_THREADS = "4";
 
+    public static final String AUTH_TYPE_PROP = "authentication.type";
+    public static final String AUTH_TYPE_NONE = "none";
+    public static final String AUTH_TYPE_DEFAULT = "default";
+    public static final String DEF_AUTH_TYPE = AUTH_TYPE_NONE;
+
+    public static final String AUTH_USER_FILE_PROP =
+        "authentication.user.file";
+
+    public static final String AUTH_HASH_METHOD_PROP =
+        "authentication.hash.method";
+    public static final String DEF_AUTH_HASH_METHOD = "SHA-512";
+
     private final Logger fLogger = Logger.getLogger(this.getClass().getName());
 
     private GraphConfig fConfig;
@@ -95,6 +114,7 @@ public class ServiceWebSocket
     private Map<Session, IMessageHandler> fHandlers;
     private StoredProcedureHandler fStoredProcs;
     private CypherCallEngine fCypher;
+    private SecurityInterceptor fInterceptor;
 
     /**
      * Creates a service websocket, activating the database in necessary,
@@ -109,7 +129,11 @@ public class ServiceWebSocket
             fConfig = context.getConfig();
             fDb = context.getDatabase();
 
-            final ImplUtil impl = configure();
+            //configure optional authentication
+            configureSecurity();
+
+            //configure transfer format
+            final ImplUtil impl = configureTransfer();
 
             //TODO: load initial data?
 
@@ -142,7 +166,7 @@ public class ServiceWebSocket
         }
     }
 
-    private ImplUtil configure() throws Exception
+    private ImplUtil configureTransfer() throws Exception
     {
         //determine whether to use threading
         String threading = fConfig.getProperty(THREADING_PROP);
@@ -208,6 +232,36 @@ public class ServiceWebSocket
         return new ImplUtil(listClass, mapClass);
     }
 
+    private void configureSecurity() throws Exception
+    {
+        //read configuration
+        String authType = fConfig.getProperty(AUTH_TYPE_PROP);
+        if(AUTH_TYPE_DEFAULT.equals(authType))
+        {
+            String hashMethod = fConfig.getProperty(AUTH_HASH_METHOD_PROP);
+            if(hashMethod == null || hashMethod.isEmpty())
+            {
+                hashMethod = DEF_AUTH_HASH_METHOD;
+            }
+
+            //create authentication mechanism
+            String userFile = fConfig.getProperty(AUTH_USER_FILE_PROP);
+
+            IPasswordScrambler scrambler = new DefaultPasswordScrambler(
+                hashMethod);
+            IAuthHandler authHandler = new DefaultAuthHandler(userFile,
+                scrambler);
+            fInterceptor = new SecurityInterceptor(authHandler);
+        }
+        else if(authType != null && !authType.isEmpty()
+            && AUTH_TYPE_NONE.equals(authType))
+        {
+            fLogger.log(Level.SEVERE, "unknown authentication type: "
+                + authType + "\nstopping startup");
+            throw new RuntimeException("failed to initialize authentication");
+        }
+    }
+
     /**
      * Opens a new session for a client, attaching a message handler.
      *
@@ -227,12 +281,13 @@ public class ServiceWebSocket
 
         if(!fThreading)
         {
-            handler = new ClientQueryHandler(wsSess, fStoredProcs, fCypher);
+            handler = new ClientQueryHandler(wsSess, fStoredProcs, fCypher,
+                fInterceptor);
         }
         else
         {
             handler = new ThreadedClientQueryHandler(wsSess, fStoredProcs,
-                fCypher, fDefThreads);
+                fCypher, fInterceptor, fDefThreads);
         }
 
         fHandlers.put(session, handler);
@@ -270,6 +325,14 @@ public class ServiceWebSocket
         t.printStackTrace();
     }
 
+    /**
+     * Starts a standalone WebSocket server, starting an embedded Neo4j
+     * database and a Tyrus-based WebSocket inside a Glassfish Grizzly
+     * container as defined in neo4j-websocket-server.properties.
+     *
+     * @param args argument vector (unused)
+     * @throws Exception if startup fails
+     */
     public static void main(String[] args) throws Exception
     {
         WebsockContextHandler conHan = new WebsockContextHandler();
@@ -298,7 +361,7 @@ public class ServiceWebSocket
         }
 
         //start server
-        Server server = new Server(host, portNum, path,
+        Server server = new Server(host, portNum, path, null,
             ServiceWebSocket.class);
 
         server.start();

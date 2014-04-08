@@ -304,8 +304,8 @@ public class LoggingServiceWebSocket
         }
 
         //start server
-        Server server = new Server(host, portNum, path,
-            LoggingServiceWebSocket.class);
+        Server server = new Server(host, portNum, path, null,
+            ServiceWebSocket.class);
 
         server.start();
 
