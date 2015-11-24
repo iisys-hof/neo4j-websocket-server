@@ -1,29 +1,13 @@
 #!/bin/bash
-# Copyright (c) 2012-2013 Institute of Information Systems, Hof University
-#
-# This file is part of "Neo4j WebSocket Server".
-#
-# "Neo4j WebSocket Server" is free software: you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or (at your
-# option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 PID=""
 APP_NAME="Neo4j WebSocket Server"
 APP_CLASS="de.hofuniversity.iisys.neo4j.websock.ServiceWebSocket"
-APP_COMMAND="java -cp ./*:./dependency-jars/* $APP_CLASS"
+APP_COMMAND="java -cp ./:./*:./dependency-jars/* $APP_CLASS"
 
 function getPID
 {
-  PID=`ps ax | grep java | grep $APP_CLASS | cut -d " " -f 2`
+  PID=`ps axf | grep java | grep $APP_CLASS | grep -v grep | awk '{print $1}'`
 }
 
 function start

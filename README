@@ -1,20 +1,3 @@
-# Copyright (c) 2012-2014 Institute of Information Systems, Hof University
-#
-# This file is part of "Neo4j WebSocket Server".
-#
-# "Neo4j WebSocket Server" is free software: you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or (at your
-# option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 
                           Neo4j WebSocket Server
 
@@ -28,7 +11,7 @@
   Documentation
   -------------
   Neo4j's documentation can be found at "http://www.neo4j.org/".
-  The version currently used by the server is 1.9.5.
+  The version currently used by the server is 1.9.8.
 
   System Requirements
   -------------------
@@ -219,14 +202,14 @@
 
         <dependency>
           <groupId>de.hofuniversity.iisys</groupId>
-          <artifactId>shindig-websocket-common</artifactId>
-          <version>0.0.1-SNAPSHOT</version>
+          <artifactId>neo4j-websocket-common</artifactId>
+          <version>0.5</version>
         </dependency>
 
         <dependency>
           <groupId>de.hofuniversity.iisys</groupId>
           <artifactId>neo4j-websocket-server</artifactId>
-          <version>0.0.1-SNAPSHOT</version>
+          <version>0.5.1</version>
         </dependency>
 
 

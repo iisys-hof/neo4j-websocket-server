@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Institute of Information Systems, Hof University
+ * Copyright (c) 2012-2015 Institute of Information Systems, Hof University
  *
  * This file is part of "Neo4j WebSocket Server".
  *
@@ -63,12 +63,22 @@ public class IDManager
         {
             Transaction tx = fDatabase.beginTx();
 
-            idNode = fDatabase.createNode();
-            idNode.setProperty(ID_NODE, ID_NODE);
-            idNodes.add(idNode, ID_NODE, ID_NODE);
+            try
+            {
+                idNode = fDatabase.createNode();
+                idNode.setProperty(ID_NODE, ID_NODE);
+                idNodes.add(idNode, ID_NODE, ID_NODE);
 
-            tx.success();
-            tx.finish();
+                tx.success();
+                tx.finish();
+            }
+            catch(Exception e)
+            {
+                tx.failure();
+                tx.finish();
+
+                throw new RuntimeException(e);
+            }
         }
         fIdNode = idNode;
     }
@@ -92,22 +102,34 @@ public class IDManager
 
         Transaction tx = fDatabase.beginTx();
 
-        if(fIdNode.hasProperty(type))
+        try
         {
-            //get ID and store next
-            nextId = (Long)fIdNode.getProperty(type);
-            id += nextId;
-            fIdNode.setProperty(type, ++nextId);
-        }
-        else
-        {
-            //start counting at 0
-            id += '0';
-            fIdNode.setProperty(type, 1L);
-        }
+            if(fIdNode.hasProperty(type))
+            {
+                //get ID and store next
+                nextId = (Long)fIdNode.getProperty(type);
+                id += nextId;
+                fIdNode.setProperty(type, ++nextId);
+            }
+            else
+            {
+                //start counting at 0
+                id += '0';
+                fIdNode.setProperty(type, 1L);
+            }
 
-        tx.success();
-        tx.finish();
+            tx.success();
+            tx.finish();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+
+            tx.failure();
+            tx.finish();
+
+            throw new RuntimeException(e);
+        }
 
         return id;
     }

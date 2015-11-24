@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Institute of Information Systems, Hof University
+ * Copyright (c) 2012-2015 Institute of Information Systems, Hof University
  *
  * This file is part of "Neo4j WebSocket Server".
  *

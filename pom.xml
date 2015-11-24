@@ -14,7 +14,6 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.hofuniversity.iisys</groupId>
 	<artifactId>neo4j-websocket-server</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<licenses>
 		<license>
 			<name>The GNU GENERAL PUBLIC LICENSE, Version 3.0</name>
@@ -26,12 +25,12 @@
 		<dependency>
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j</artifactId>
-			<version>1.9.5</version>
+			<version>1.9.8</version>
 		</dependency>
 		<dependency>
 			<groupId>de.hofuniversity.iisys</groupId>
 			<artifactId>neo4j-websocket-common</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>javax</groupId>
@@ -42,12 +41,12 @@
 		<dependency>
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j-ha</artifactId>
-			<version>1.9.5</version>
+			<version>1.9.8</version>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.tyrus</groupId>
 			<artifactId>tyrus-server</artifactId>
-			<version>1.5</version>
+			<version>1.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -58,13 +57,13 @@
 		<dependency>
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j-kernel</artifactId>
-			<version>1.9.5</version>
+			<version>1.9.8</version>
 			<type>test-jar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j-management</artifactId>
-			<version>1.9.5</version>
+			<version>1.9.8</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.inject</groupId>
@@ -73,8 +72,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.tyrus</groupId>
-			<artifactId>tyrus-container-grizzly-server</artifactId>
-			<version>1.5</version>
+			<artifactId>tyrus-container-grizzly</artifactId>
+			<version>1.2.1</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -171,4 +170,5 @@
 	</build>
 	<packaging>war</packaging>
 	<name>Neo4j WebSocket Server</name>
+	<version>0.5.1</version>
 </project>
