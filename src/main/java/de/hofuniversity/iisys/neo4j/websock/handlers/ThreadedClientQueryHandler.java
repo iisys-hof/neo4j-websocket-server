@@ -124,7 +124,8 @@ public class ThreadedClientQueryHandler implements IMessageHandler
     @Override
     public void dispose()
     {
-        //not used
+        //cleanup session's links
+        fPool.removeSession(fClientSess);
     }
 
     @Override

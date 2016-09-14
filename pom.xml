@@ -170,5 +170,5 @@
 	</build>
 	<packaging>war</packaging>
 	<name>Neo4j WebSocket Server</name>
-	<version>0.5.1</version>
+	<version>0.5.2</version>
 </project>
